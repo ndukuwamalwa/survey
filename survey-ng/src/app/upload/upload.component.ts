@@ -57,7 +57,8 @@ export class UploadComponent implements OnInit {
     const types = [
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'.toLowerCase(),
       'application/vnd.ms-excel'.toLowerCase(),
-      'application/json'.toLowerCase()
+      'application/json'.toLowerCase(),
+      'text/csv'.toLowerCase()
     ];
     const file = files[0];
     if (!types.includes(file.type.toLowerCase())) {
