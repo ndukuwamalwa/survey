@@ -98,7 +98,7 @@ export class SurveyResolver {
         }
         console.time(sampleTime);
         const areaData: Array<{ code: number, area: string, count: number, sampleSize: number }> = await getManager()
-            .query(`SELECT code, area, COUNT(*) count FROM survey_dtls WHERE survey=? GROUP BY area`, [code]);
+            .query(`SELECT area, COUNT(*) count FROM survey_dtls WHERE survey=? GROUP BY area`, [code]);
         const sampleSize = this.getSampleSize(areaData.length);
         const selectedIndices = this.getRandomIndices(sampleSize);
         const selectedAreas = areaData.filter((v, i) => selectedIndices.includes(i));
@@ -287,7 +287,7 @@ export class SurveyResolver {
             select: ['phone']
         });
         const phones: Array<string> = data.filter(v => this.isKePhoneNo(v.phone)).map(v => this.formatKePhone(v.phone));
-        const res = await this.smsService.send(['+254715040649'], question.description);
+        const res = await this.smsService.send(['+254725781197'], question.description);
         await this.surveyRepo.update({ code }, { validPhones: phones.length, smsSent: true });
         return {
             success: true,
