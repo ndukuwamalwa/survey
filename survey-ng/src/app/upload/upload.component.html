@@ -1,0 +1,68 @@
+<app-portal>
+    <ng-container class="appContent">
+        <p-toolbar id="toolbar">
+            <div class="p-toolbar-group-left">
+                <input type="file" name="file" id="file" hidden="true" (change)="onFileSelected($event.target)"
+                    accept="application/vnd.ms-excel, application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .csv">
+                <p-button label="Upload" icon="pi pi-upload" (onClick)="showSelectFile()" styleClass="p-button-success"
+                    class="p-mr-2" [loading]="loading"></p-button>
+                <p-button label="Save" icon="pi pi-save" [loading]="isSaving" (onClick)="saveUpload()"></p-button>
+            </div>
+            <p-dropdown [options]="questions" [(ngModel)]="selectedQuestion" optionLabel="description" [filter]="true"
+                filterBy="description" [showClear]="true" placeholder="Select a Question to Send">
+                <ng-template pTemplate="selectedItem">
+                    <div class="country-item country-item-value" *ngIf="selectedQuestion">
+                        <div>{{selectedQuestion.description}}</div>
+                    </div>
+                </ng-template>
+                <ng-template let-question pTemplate="item">
+                    <div class="country-item">
+                        <div>{{question.description}}</div>
+                    </div>
+                </ng-template>
+            </p-dropdown>
+        </p-toolbar>
+        <p-toast></p-toast>
+        <p-confirmDialog></p-confirmDialog>
+        <main>
+            <p-table [autoLayout]="true" [resizableColumns]="true"
+                styleClass="p-datatable-striped p-datatable-responsive-demo" [paginator]="true"
+                [paginatorPosition]="'top'" [rows]="20" [loading]="loading" [value]="uploadedData"
+                [showCurrentPageReport]="true"
+                currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
+                [rowsPerPageOptions]="[10,20,40]">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th pSortableColumn="county">County</th>
+                        <th pSortableColumn="constituency">Constituency</th>
+                        <th pSortableColumn="area">Area</th>
+                        <th pSortableColumn="pollingStation">Polling Station</th>
+                        <th pSortableColumn="dob">D.o.B</th>
+                        <th pSortableColumn="firstname">First Name</th>
+                        <th pSortableColumn="middlename">Middle Name</th>
+                        <th pSortableColumn="surname">Surname</th>
+                        <th pSortableColumn="gender">Gender</th>
+                        <th pSortableColumn="phone">Phone Number</th>
+                        <th pSortableColumn="idPassport">ID/Passport</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td>{{row.county | titlecase}}</td>
+                        <td>{{row.constituency | titlecase}}</td>
+                        <td>{{row.area | titlecase}}</td>
+                        <td>{{row.pollingStation | titlecase}}</td>
+                        <td>{{row.dob}}</td>
+                        <td>{{row.firstname | titlecase}}</td>
+                        <td>{{row.middlename | titlecase}}</td>
+                        <td>{{row.surname | titlecase}}</td>
+                        <td>{{row.gender | titlecase}}</td>
+                        <td>{{row.phone}}</td>
+                        <td>{{row.idPassport}}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <p-dialog [header]="dialogHeader" [(visible)]="showDialog" [modal]="true">{{dialogMessage}}</p-dialog>
+        </main>
+    </ng-container>
+</app-portal>

@@ -1,0 +1,26 @@
+/* You can add global styles to this file, and also import other style files */
+* {
+    font-size: 12px;
+}
+
+:root {
+    --nav-width: 200px;
+}
+
+.danger {
+    color: red;
+    cursor: pointer;
+}
+
+.danger:hover {
+    text-decoration: underline;
+}
+
+.link {
+    color: blue;
+    cursor: pointer;
+}
+
+.link:hover {
+    text-decoration: underline;
+}

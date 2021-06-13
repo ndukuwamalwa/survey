@@ -1,0 +1,42 @@
+<app-portal>
+    <ng-container class="appContent">
+        <p-toolbar>
+            <p-button label="New" icon="pi pi-plus" (onClick)="openAddQuestion()"></p-button>
+        </p-toolbar>
+        <p-table [value]="questions">
+            <ng-template pTemplate="header">
+                <tr>
+                    <th>Description</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-question>
+                <tr>
+                    <td>{{question.description}}</td>
+                    <td class="link" (click)="editQuestion(question)">Edit</td>
+                    <td class="danger" (click)="deleteQuestion(question)">Delete</td>
+                </tr>
+            </ng-template>
+        </p-table>
+        <p-dialog [(visible)]="showAddQuestion" [header]="(isUpdate ? 'Edit' : 'Add') + ' Question'" [modal]="true"
+            [appendTo]="'body'">
+            <form (ngSubmit)="saveQuestion(f)" #f="ngForm" ngNativeValidate>
+                <div class="p-fluid p-formgrid p-grid">
+                    <div class="p-field p-col-8 p-md-3">
+                        <label for="description">Description</label>
+                        <br>
+                        <textarea name="description" id="description" pInputText required
+                            [ngModel]="question?.description"
+                            style="width: 300px;resize: none; height: 150px;"></textarea>
+                    </div>
+                </div>
+                <div class="p-fluid p-formgrid p-grid" style="margin-top: 10px;">
+                    <button pButton [loading]="saving" label="Save" icon="pi pi-save"></button>
+                </div>
+            </form>
+        </p-dialog>
+        <p-toast></p-toast>
+        <p-confirmDialog></p-confirmDialog>
+    </ng-container>
+</app-portal>

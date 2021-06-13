@@ -1,0 +1,89 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type SurveySummary {
+  area: String!
+  records: Float!
+  samples: Float!
+}
+
+type SurveyData {
+  code: Float!
+  county: String
+  constituency: String
+  area: String
+  pollingStation: String
+  dob: String
+  firstname: String
+  middlename: String
+  surname: String
+  gender: String
+  phone: String
+  idPassport: String
+}
+
+type Survey {
+  code: Float!
+  uploadDate: String!
+  records: Float!
+  samples: Float!
+  question: String!
+  smsSent: Float!
+  validPhones: Float!
+  summary: [SurveySummary!]
+  raw(page: Float): [SurveyData!]
+}
+
+type MutationResponse {
+  success: Boolean!
+  message: String!
+}
+
+type Question {
+  code: Float!
+  description: String!
+}
+
+type User {
+  username: String!
+}
+
+type LoginResponse {
+  success: Boolean!
+  message: String!
+  token: String
+}
+
+type Query {
+  user(username: String!): User!
+  users: [User!]!
+  questions: [Question!]!
+  survey(code: Float!): Survey!
+  surveys: [Survey!]!
+}
+
+type Mutation {
+  login(password: String!, username: String!): LoginResponse!
+  logout(token: String!): String!
+  uploadData(question: Float!, data: [SurveySampleInput!]!): MutationResponse!
+  sampleData(code: Float!): MutationResponse!
+  addQuestion(description: String!): MutationResponse!
+  updateQuestion(code: Float!, description: String!): MutationResponse!
+  deleteQuestion(code: Float!): MutationResponse!
+  sendSMS(code: Float!): MutationResponse!
+}
+
+input SurveySampleInput {
+  county: String
+  constituency: String
+  area: String
+  pollingStation: String
+  dob: String
+  firstname: String
+  middlename: String
+  surname: String
+  gender: String
+  phone: String
+  idPassport: String
+}

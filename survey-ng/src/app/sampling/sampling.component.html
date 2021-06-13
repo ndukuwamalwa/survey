@@ -1,0 +1,68 @@
+<app-portal>
+    <ng-container class="appContent">
+        <p-toast></p-toast>
+        <p-confirmDialog></p-confirmDialog>
+        <h1 style="font-size: 14px;">Sampling and Sharing Survey Questions</h1>
+        <main>
+            <p-table [value]="surveys" [loading]="isFetchingSurveys" styleClass="p-datatable-striped"
+                [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'" [showCurrentPageReport]="true"
+                [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single" [(selection)]="selectedSurvey"
+                (selectionChange)="onSurveySelected()" [autoLayout]="true">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th></th>
+                        <th>Upload Date</th>
+                        <th>Record Count</th>
+                        <th>Sample Size</th>
+                        <th title="This is the number of valid phone numbers in the sample">Sent To</th>
+                        <th></th>
+                        <th></th>
+                        <th>Question</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-survey>
+                    <tr>
+                        <td>
+                            <p-tableRadioButton [value]="survey" [disabled]="survey.samples === 0"></p-tableRadioButton>
+                        </td>
+                        <td>{{survey.uploadDate | date: 'short'}}</td>
+                        <td>{{survey.records | number}}</td>
+                        <td>{{survey.samples | number}}</td>
+                        <td title="This is the number of valid phone numbers in the sample">{{survey.validPhones | number}}</td>
+                        <td>
+                            <p-button *ngIf="survey.samples === 0" label="Sample" [loading]="isSampling"
+                                (onClick)="sample(survey)" icon="pi pi-check-circle"></p-button>
+                        </td>
+                        <td>
+                            <p-button *ngIf="survey.samples > 0 && !survey.smsSent" [loading]="isSendingSMS" label="SMS"
+                                icon="pi pi-envelope" (onClick)="sendSMS(survey)" styleClass="p-button-success">
+                            </p-button>
+                        </td>
+                        <td>{{survey.question}}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <br>
+            <h2>Sampling Details</h2>
+            <p-divider></p-divider>
+            <p-table [value]="details" [paginator]="true" [rows]="30" [loading]="isGettingSamples"
+                [paginatorPosition]="'top'" styleClass="p-datatable-striped"
+                [rowsPerPageOptions]="[10,20,30]" [autoLayout]="true" [resizableColumns]="true">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>C.A.W</th>
+                        <th>Total Records</th>
+                        <th>Samples</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-detail>
+                    <tr>
+                        <td>{{detail.area}}</td>
+                        <td>{{detail.records | number}}</td>
+                        <td>{{detail.samples | number}}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </main>
+    </ng-container>
+</app-portal>

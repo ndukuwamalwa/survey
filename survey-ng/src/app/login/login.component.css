@@ -1,0 +1,58 @@
+* {
+    font-size: 14px;
+}
+main {
+    height: 100%;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    width: 320px;
+}
+
+form {
+    width: 100%;
+    height: 100%;
+    padding: 10px 15px;
+    border: thin solid #b4b4b467;
+    border-radius: 5px;
+}
+
+fieldset {
+    display: flex;
+    flex-direction: column;
+    border: none;
+    margin-bottom: 5px;
+}
+
+.p-float-label {
+    width: 100% !important;
+}
+
+.p-float-label > input {
+    width: 100%;
+}
+
+.p-float-label:last-child {
+    margin-top: 15px;
+}
+
+p-message {
+    width: 100%;
+}
+
+#logo {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}

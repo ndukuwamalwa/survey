@@ -1,0 +1,20 @@
+{
+    "type": "mysql",
+    "host": "localhost",
+    "port": 3306,
+    "username": "root",
+    "password": "Admin@2021",
+    "database": "survey",
+    "entities": [
+        "dist/**/*.entity{.ts,.js}"
+    ],
+    "synchronize": true,
+    "migrations": [
+        "src/migration/*{.ts}"
+    ],
+    "cli": {
+        "migrationsDir": "src/migration"
+    },
+    "connectTimeout": 300000,
+    "acquireTimeout": 300000
+}

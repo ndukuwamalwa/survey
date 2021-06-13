@@ -1,0 +1,28 @@
+<main>
+    <div class="card">
+        <form #loginForm="ngForm" ngNativeValidate (ngSubmit)="login(loginForm.value)">
+            <fieldset>
+                <h1>Login</h1>
+            </fieldset>
+            <fieldset>
+                <span class="p-float-label">
+                    <input type="text" name="username" id="username" autocomplete="off" required ngModel pInputText>
+                    <label for="username">Username</label>
+                </span>
+            </fieldset>
+            <fieldset>
+                <span class="p-float-label">
+                    <input type="password" name="password" id="password" required ngModel pInputText>
+                    <label for="password">Password</label>
+                </span>
+            </fieldset>
+            <fieldset *ngIf="isError">
+                <p-message [severity]="'error'" styleClass="p-mr-2" [text]="errorMessage" [style]="{ 'width': '100%' }">
+                </p-message>
+            </fieldset>
+            <fieldset>
+                <button label="Login" icon="pi pi-sign-in" [loading]="loading" pButton></button>
+            </fieldset>
+        </form>
+    </div>
+</main>
