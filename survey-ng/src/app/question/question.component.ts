@@ -40,15 +40,15 @@ export class QuestionComponent implements OnInit {
   saveQuestion(form: NgForm): void {
     let mutation: DocumentNode;
     if (this.isUpdate) {
-      mutation = gql`mutation m {
-        updateQuestion(description: "${form.value.description}", code: ${this.question.code}) {
+      mutation = gql`mutation m($desc: String!) {
+        updateQuestion(description: $desc, code: ${this.question.code}) {
           success
           message
         }
       }`;
     } else {
-      mutation = gql`mutation m {
-        addQuestion(description: "${form.value.description}") {
+      mutation = gql`mutation m($desc: String!) {
+        addQuestion(description: $desc) {
           success
           message
         }
@@ -58,7 +58,10 @@ export class QuestionComponent implements OnInit {
       mutation,
       refetchQueries: [{
         query: GET_QUESTIONS_QUERY
-      }]
+      }],
+      variables: {
+        desc: form.value.description
+      }
     })
       .subscribe(res => {
         const result = GraphQLEssentials.handleMutationResponse(res, this.isUpdate ? 'updateQuestion' : 'addQuestion');

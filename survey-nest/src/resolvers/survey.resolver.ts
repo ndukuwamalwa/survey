@@ -154,9 +154,6 @@ export class SurveyResolver {
     async addQuestion(
         @Args({ name: 'description', type: () => String }) description: string
     ): Promise<MutationResponse> {
-        if (!description.endsWith('?')) {
-            description = description + '?';
-        }
         const question: QuestionEntity = {
             description,
             code: null,
