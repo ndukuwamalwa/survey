@@ -4,6 +4,66 @@
         <p-confirmDialog></p-confirmDialog>
         <h1 style="font-size: 14px;">Sampling and Sharing Survey Questions</h1>
         <main>
+            <h2>Raw Data</h2>
+            <p-table [value]="rawData" [loading]="isFetchingRaw" styleClass="p-datatable-striped"
+                [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'" [showCurrentPageReport]="true"
+                [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single" [(selection)]="selectedRaw"
+                (selectionChange)="onRawSelected()" [autoLayout]="true">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th></th>
+                        <th>Upload Date</th>
+                        <th>Record Count</th>
+                        <th>Phone Nos.</th>
+                        <th>Constituencies</th>
+                        <th>C.A.Ws</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-row>
+                    <tr>
+                        <td>
+                            <p-tableRadioButton [value]="row"></p-tableRadioButton>
+                        </td>
+                        <td>{{row.uploadDate | date}}</td>
+                        <td>{{row.records | number}}</td>
+                        <td>{{row.validPhones | number}}</td>
+                        <td>{{row.constituencyCount | number}}</td>
+                        <td>{{row.wardCount | number}}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            <p-dialog [modal]="true" [(visible)]="showAddSampling" header="New Sample">
+                <form (ngSubmit)="addSample(f3)" #f3="ngForm" ngNativeValidate>
+                    <fieldset>
+                        <label for="constituency">Constituency</label>
+                        <select name="constituency" id="constituency" (change)="onConstituencySelected($event.target)"
+                            required ngModel="ALL" pInputText>
+                            <option value="ALL">None (Whole County)</option>
+                            <option [value]="c.name" *ngFor="let c of constituencies">{{c.name}}</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <label for="ward">County Assemply Ward</label>
+                        <select name="ward" required id="ward" ngModel="ALL" [disabled]="!selectedContituency" pInputText>
+                            <option value="ALL">None (Whole Constituency)</option>
+                            <option [value]="w" *ngFor="let w of wards">{{w}}</option>
+                        </select>
+                    </fieldset>
+                    <fieldset>
+                        <label for="question">Question</label>
+                        <textarea name="question" id="question" required pInputText ngModel
+                            style="height: 160px;width: 380px;resize: none;"></textarea>
+                    </fieldset>
+                    <fieldset>
+                        <button pButton label="Save and Sample" icon="pi pi-save" [loading]="isSavingSample"></button>
+                    </fieldset>
+                </form>
+            </p-dialog>
+            <p-toolbar>
+                <div class="p-toolbar-group-left">
+                    <p-button label="New Sample" (onClick)="openAddNewSampling()" [disabled]="!selectedRaw"></p-button>
+                </div>
+            </p-toolbar>
             <p-table [value]="surveys" [loading]="isFetchingSurveys" styleClass="p-datatable-striped"
                 [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'" [showCurrentPageReport]="true"
                 [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single" [(selection)]="selectedSurvey"
@@ -11,11 +71,11 @@
                 <ng-template pTemplate="header">
                     <tr>
                         <th></th>
-                        <th>Upload Date</th>
+                        <th>Constituency</th>
+                        <th>C.A.W</th>
                         <th>Record Count</th>
                         <th>Sample Size</th>
-                        <th title="This is the number of valid phone numbers in the sample">Sent To</th>
-                        <th></th>
+                        <th>Sent To</th>
                         <th></th>
                         <th>Question</th>
                     </tr>
@@ -25,14 +85,11 @@
                         <td>
                             <p-tableRadioButton [value]="survey" [disabled]="survey.samples === 0"></p-tableRadioButton>
                         </td>
-                        <td>{{survey.uploadDate | date: 'short'}}</td>
+                        <td>{{survey.constituency | titlecase}}</td>
+                        <td>{{survey.ward | titlecase}}</td>
                         <td>{{survey.records | number}}</td>
                         <td>{{survey.samples | number}}</td>
-                        <td title="This is the number of valid phone numbers in the sample">{{survey.validPhones | number}}</td>
-                        <td>
-                            <p-button *ngIf="survey.samples === 0" label="Sample" [loading]="isSampling"
-                                (onClick)="sample(survey)" icon="pi pi-check-circle"></p-button>
-                        </td>
+                        <td>{{survey.validPhones | number}}</td>
                         <td>
                             <p-button *ngIf="survey.samples > 0 && !survey.smsSent" [loading]="isSendingSMS" label="SMS"
                                 icon="pi pi-envelope" (onClick)="sendSMS(survey)" styleClass="p-button-success">
@@ -46,11 +103,11 @@
             <h2>Sampling Details</h2>
             <p-divider></p-divider>
             <p-table [value]="details" [paginator]="true" [rows]="30" [loading]="isGettingSamples"
-                [paginatorPosition]="'top'" styleClass="p-datatable-striped"
-                [rowsPerPageOptions]="[10,20,30]" [autoLayout]="true" [resizableColumns]="true">
+                [paginatorPosition]="'top'" styleClass="p-datatable-striped" [rowsPerPageOptions]="[10,20,30]"
+                [autoLayout]="true" [resizableColumns]="true">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>C.A.W</th>
+                        <th>{{selectedAreaName}}</th>
                         <th>Total Records</th>
                         <th>Samples</th>
                     </tr>

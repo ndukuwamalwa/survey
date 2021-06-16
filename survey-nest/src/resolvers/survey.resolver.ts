@@ -1,64 +1,92 @@
 import { Args, Mutation, Parent, Query, ResolveField, Resolver } from "@nestjs/graphql";
 import { InjectRepository } from "@nestjs/typeorm";
-import { QuestionEntity, SurveyDetailEntity, SurveyEntity } from "src/entities/survey.entity";
+import { ConstituencyEntity, RawDataDetailEntity, RawDataEntity, SurveyDetailEntity, SurveyEntity } from "src/entities/survey.entity";
 import { SmsService } from "src/services/sms.service";
 import { UserService } from "src/services/user.service";
-import { MutationResponse, Question, Survey, SurveyData, SurveySampleInput, SurveySummary } from "src/types/survey.types";
+import { Constituency, MutationResponse, RawData, SampleInput, Survey, SurveyData, SurveySampleInput, SurveySummary } from "src/types/survey.types";
 import { getManager, In, Not, Repository } from "typeorm";
 
 @Resolver(of => Survey)
 export class SurveyResolver {
     constructor(
         @InjectRepository(SurveyEntity) private surveyRepo: Repository<SurveyEntity>,
-        @InjectRepository(QuestionEntity) private questionRepo: Repository<QuestionEntity>,
         @InjectRepository(SurveyDetailEntity) private surveyDetailsRepo: Repository<SurveyDetailEntity>,
+        @InjectRepository(RawDataEntity) private rawRepo: Repository<RawDataEntity>,
+        @InjectRepository(RawDataDetailEntity) private rawDtlRepo: Repository<RawDataDetailEntity>,
         private smsService: SmsService
     ) { }
 
     @Mutation(returns => MutationResponse)
     async uploadData(
-        @Args({ name: 'data', type: () => [SurveySampleInput] }) data: Array<SurveySampleInput>,
-        @Args({ name: 'question', type: () => Number }) questionCode: number
+        @Args({ name: 'data', type: () => [SurveySampleInput] }) data: Array<SurveySampleInput>
     ): Promise<MutationResponse> {
         const label = 'TOTAL INSERT TIME';
         console.time(label);
         if (data.length === 0) {
             return {
                 success: false,
-                message: `No sample provided`
+                message: `No data provided`
             };
         }
-        const question = await this.questionRepo.findOne({ code: questionCode });
-        if (!question) {
+        let counter = 0;
+        const details: Array<RawDataDetailEntity> = data.map(v => {
+            const valid = this.isKePhoneNo(v.phone);
+            const phone = valid ? this.formatKePhone(v.phone) : v.phone;
+            if (valid) {
+                counter += 1;
+            }
             return {
-                success: false,
-                message: `Invalid Survey Question`
-            };
-        }
-        const details: Array<SurveyDetailEntity> = data.map(v => ({
-            ...v,
-            code: null,
-            question,
-            phone: v.phone,
-            survey: null,
-            responded: false,
-            dateResponded: null,
-            response: null,
-            selected: false
-        }));
-        const survey: SurveyEntity = {
+                code: null,
+                phone,
+                raw: null,
+                county: v.county,
+                constituency: (v.constituency || '').toUpperCase(),
+                ward: (v.area || '').toUpperCase(),
+                pollingStation: v.pollingStation,
+                dob: v.dob,
+                firstname: v.firstname,
+                surname: v.surname,
+                middlename: v.middlename,
+                gender: v.gender,
+                idPassport: v.idPassport,
+                phoneValid: valid
+            }
+        });
+        const raw: RawDataEntity = {
             code: null,
             uploadDate: UserService.currentTimestamp(),
-            smsSent: false,
-            records: data.length,
-            question,
-            samples: 0,
-            validPhones: 0
+            records: details.length,
+            validPhones: counter,
+            constituencyCount: 0,
+            wardCount: 0
         };
         try {
-            const insert = await this.surveyRepo.save(survey);
-            const newDetails = details.map(v => ({ ...v, survey: insert.code }));
-            const batches: Array<Array<SurveyDetailEntity>> = [];
+            const insert = await this.rawRepo.save(raw);
+            const mps: Array<{ [name: string]: Array<string> }> = [];
+            details.forEach(v => {
+                if (mps[v.constituency]) {
+                    mps[v.constituency].push(v.ward);
+                } else {
+                    mps[v.constituency] = [v.ward];
+                }
+            });
+            const constituencies: Array<ConstituencyEntity> = [];
+            let constituencyCount = 0;
+            let wardCount = 0;
+            for (let key of Object.keys(mps)) {
+                const wards: Array<string> = Array.from(new Set(mps[key]));
+                constituencies.push({
+                    code: null,
+                    raw: insert.code,
+                    name: key,
+                    wards
+                });
+                constituencyCount += 1;
+                wardCount += wards.length
+            }
+            await getManager().getRepository(ConstituencyEntity).insert(constituencies);
+            const newDetails = details.map(v => ({ ...v, raw: insert.code }));
+            const batches: Array<Array<RawDataDetailEntity>> = [];
             const batchSize = 20_000;
             let remaining = newDetails.length;
             let start = 0;
@@ -68,8 +96,9 @@ export class SurveyResolver {
                 start += batchSize;
             }
             for (let batch of batches) {
-                await this.surveyDetailsRepo.insert(batch);
+                await this.rawDtlRepo.insert(batch);
             }
+            await this.rawRepo.update({ code: insert.code }, { constituencyCount, wardCount });
             console.timeEnd(label);
             return {
                 success: true,
@@ -86,37 +115,98 @@ export class SurveyResolver {
 
     @Mutation(returns => MutationResponse)
     async sampleData(
-        @Args({ name: 'code', type: () => Number }) code: number
+        @Args({ name: 'data', type: () => SampleInput }) data: SampleInput
     ): Promise<MutationResponse> {
         const sampleTime = 'SAMPLING TIME';
-        const item = await this.surveyRepo.findOne({ code, samples: 0 });
-        if (!item) {
+        const raw = await this.rawRepo.findOne({ code: data.raw });
+        if (!raw) {
             return {
                 success: false,
-                message: `No Data Found`
+                message: `No Raw Data Found`
             };
         }
         console.time(sampleTime);
-        const areaData: Array<{ code: number, area: string, count: number, sampleSize: number }> = await getManager()
-            .query(`SELECT area, COUNT(*) count FROM survey_dtls WHERE survey=? GROUP BY area`, [code]);
-        const sampleSize = this.getSampleSize(areaData.length);
+        let query: string;
+        const params = [];
+        let isPerConstituency = data.constituency.toUpperCase() !== 'ALL';
+        let isPerWard = isPerConstituency && data.ward.toUpperCase() !== 'ALL';
+        if (isPerConstituency) {
+            if (isPerWard) {
+                // Sampling per C.A.W
+                query = `SELECT pollingStation, COUNT(*) count FROM raw_data_dtls WHERE raw=? AND constituency=? AND ward=? GROUP BY ward`;
+                params.push(data.raw, data.constituency, data.ward);
+            } else {
+                // Sampling per Constituency
+                query = `SELECT ward, COUNT(*) count FROM raw_data_dtls WHERE raw=? AND constituency=? GROUP BY ward`;
+                params.push(data.raw, data.constituency);
+            }
+        } else {
+            // Sampling per County
+            query = `SELECT ward, COUNT(*) count FROM raw_data_dtls WHERE raw=? GROUP BY ward`;
+            params.push(data.raw);
+        }
+        const dataToSample: Array<{ ward: string, pollingStation: string, count: number }> = await getManager().query(query, params);
+        const sampleSize = this.getSampleSize(dataToSample.length);
         const selectedIndices = this.getRandomIndices(sampleSize);
-        const selectedAreas = areaData.filter((v, i) => selectedIndices.includes(i));
-        for (let area of selectedAreas) {
-            const items = await this.surveyDetailsRepo.find({ area: area.area, survey: code });
+        const selectedData = dataToSample.filter((v, i) => selectedIndices.includes(i));
+
+        let survey: SurveyEntity = {
+            code: null,
+            records: 0,
+            samples: 0,
+            question: data.question,
+            smsSent: false,
+            constituency: data.constituency,
+            ward: data.ward,
+            area: isPerWard ? 'C.A.W' : isPerConstituency ? 'Constituency' : '',
+            raw: data.raw
+        };
+        survey = await this.surveyRepo.save(survey);
+        let records = 0, samples = 0;
+        for (let item of selectedData) {
+            let items: Array<RawDataDetailEntity>;
+            if (isPerWard) {
+                items = await this.rawDtlRepo.find({
+                    where: {
+                        raw: data.raw, constituency: data.constituency, pollingStation: item.pollingStation
+                    },
+                    select: ['code', 'phone', 'pollingStation', 'ward']
+                });
+            } else if (!isPerWard && isPerConstituency) {
+                items = await this.rawDtlRepo.find({
+                    where: {
+                        raw: data.raw, constituency: data.constituency, ward: item.ward
+                    },
+                    select: ['code', 'phone', 'pollingStation', 'ward']
+                });
+            } else {
+                items = await this.rawDtlRepo.find({
+                    where: {
+                        raw: data.raw, ward: item.ward
+                    },
+                    select: ['code', 'phone', 'pollingStation', 'ward']
+                });
+            }
             const sSize = this.getSampleSize(items.length);
             const selectedIndices = this.getRandomIndices(sSize);
             const sampled = items.filter((v, i) => selectedIndices.includes(i));
-            area.sampleSize = sSize;
-            const toSend: Array<number> = sampled.map(v => v.code);
-            await this.surveyDetailsRepo.update({ code: In(toSend) }, { selected: true });
+            const sampledCodes = sampled.map(i => i.code);
+            const dtls: Array<SurveyDetailEntity> = items.map(v => ({
+                code: null,
+                survey: survey.code,
+                phone: v.phone,
+                responded: false,
+                response: null,
+                dateResponded: null,
+                pollingStation: v.pollingStation,
+                ward: v.ward,
+                selected: sampledCodes.includes(v.code)
+            }));
+            records += dtls.length;
+            samples += sSize;
+            await this.surveyDetailsRepo.insert(dtls);
         }
-        const final = selectedAreas.reduce((a, b) => {
-            a.sampleSize += b.sampleSize;
-            return a;
-        });
-        console.log(`Total Sample Size: ${final.sampleSize}`);
-        await this.surveyRepo.update({ code }, { samples: final.sampleSize });
+        await this.surveyRepo.update({ code: survey.code }, { records, samples });
         console.timeEnd(sampleTime);
         return {
             success: true,
@@ -148,50 +238,6 @@ export class SurveyResolver {
         }
 
         return values;
-    }
-
-    @Mutation(returns => MutationResponse)
-    async addQuestion(
-        @Args({ name: 'description', type: () => String }) description: string
-    ): Promise<MutationResponse> {
-        const question: QuestionEntity = {
-            description,
-            code: null,
-            surveys: Promise.resolve([])
-        };
-        try {
-            await this.questionRepo.insert(question);
-            return {
-                success: true,
-                message: 'New question created successfully.'
-            };
-        } catch (error) {
-            return {
-                success: false,
-                message: `Survey Question "${description}" Already Exists`
-            };
-        }
-    }
-
-    @Mutation(returns => MutationResponse)
-    async updateQuestion(
-        @Args({ name: 'description', type: () => String }) description: string,
-        @Args({ name: 'code', type: () => Number }) code: number
-    ): Promise<MutationResponse> {
-        let exist = await this.questionRepo.findOne({ code });
-        if (!exist) {
-            return { success: false, message: `Question Not Found` };
-        }
-        exist = await this.questionRepo.findOne({ description, code: Not(code) });
-        if (exist) {
-            return { success: false, message: `There exists another question with the same description` };
-        }
-        try {
-            await this.questionRepo.update({ code }, { description });
-            return { success: true, message: `Question Updated Successfully.` };
-        } catch (error) {
-            return { success: false, message: `Failed to update question` };
-        }
     }
 
     private isKePhoneNo(value: string): boolean {
@@ -235,28 +281,8 @@ export class SurveyResolver {
         if (value.length === 10) {
             return `+254${value.substring(1)}`;
         }
-        if (value.length === 7) {
+        if (value.length === 9) {
             return `+254${value}`;
-        }
-    }
-
-    @Mutation(returns => MutationResponse)
-    async deleteQuestion(
-        @Args({ name: 'code', type: () => Number }) code: number
-    ): Promise<MutationResponse> {
-        const question = await this.questionRepo.findOne({ code });
-        if (!question) {
-            return { success: false, message: `Question Not Found` };
-        }
-        const surveys = await this.surveyRepo.count({ question });
-        if (surveys > 0) {
-            return { success: false, message: `Cannot delete a question that has surveys` };
-        }
-        try {
-            await this.questionRepo.delete({ code });
-            return { success: true, message: `Question Deleted Successfully.` };
-        } catch (error) {
-            return { success: false, message: `Failed to delete question` };
         }
     }
 
@@ -264,100 +290,85 @@ export class SurveyResolver {
     async sendSMS(
         @Args({ name: 'code', type: () => Number }) code: number
     ): Promise<MutationResponse> {
-        let survey = await this.questionRepo.query(`SELECT * FROM survey WHERE code=?`, [code]);
-        if (survey.length === 0) {
+        let survey = await this.surveyRepo.findOne({ code });
+        if (!survey) {
             return {
                 success: false,
                 message: `Invalid Survey ID`
             };
         }
-        survey = survey[0];
-        const question = await this.questionRepo.findOne({ code: survey.questionCode });
-        if (!question) {
+        if (!survey.question || survey.question.trim().length === 0) {
             return {
                 success: false,
-                message: `Question Not Found`
+                message: `No question set.`
             };
         }
-        const data = await this.surveyDetailsRepo.find({
-            where: {
-                survey: survey.code,
-                selected: true
-            },
-            select: ['phone']
-        });
-        const phones: Array<string> = data.filter(v => this.isKePhoneNo(v.phone)).map(v => this.formatKePhone(v.phone));
-        const res = await this.smsService.send(['+254725781197'], question.description);
-        await this.surveyRepo.update({ code }, { validPhones: phones.length, smsSent: true });
+        const data = await this.surveyDetailsRepo.find({ survey: survey.code });
+        const phones: Array<string> = data.map(v => v.phone);
+        const res = await this.smsService.send(['+254725781197'], survey.question);
+        await this.surveyRepo.update({ code }, { smsSent: true });
         return {
             success: true,
             message: `Question sending to respondents is in progress`
         };
     }
 
-    @Query(returns => [Question])
-    async questions(): Promise<Array<Question>> {
-        const questions = await this.questionRepo.find();
-        return questions;
+    @Query(returns => [RawData])
+    async rawData(): Promise<Array<RawData>> {
+        const rawData = await this.rawRepo.find({
+            order: {
+                uploadDate: 'DESC'
+            }
+        });
+        return rawData;
+    }
+
+    @Query(returns => [Constituency])
+    async rawConstituencies(
+        @Args({ name: 'code', type: () => Number }) code: number
+    ): Promise<Array<Constituency>> {
+        const data = await getManager().getRepository(ConstituencyEntity).find({
+            where: {
+                raw: code
+            },
+            select: ['name', 'wards']
+        });
+        return data;
     }
 
     @Query(returns => Survey)
     async survey(
         @Args({ name: 'code', type: () => Number }) code: number
     ): Promise<Survey> {
-        let surveys: Array<Survey> = await getManager().createQueryBuilder(SurveyEntity, 'survey')
-            .select(`survey.code,uploadDate,records,validPhones,smsSent,question.description question,
-            (SELECT COUNT(*) FROM survey_dtls WHERE survey=survey.code AND selected=1) samples`)
-            .innerJoin(QuestionEntity, 'question', 'question.code=survey.questionCode')
-            .where('survey.code=:code', { code })
-            .orderBy('survey.code', 'DESC')
-            .execute();
-
-        return surveys[0];
+        const survey = await this.surveyRepo.findOne({ code });
+        return survey;
     }
 
     @Query(returns => [Survey])
-    async surveys(): Promise<Array<Survey>> {
-        let surveys: Array<Survey> = await getManager().createQueryBuilder(SurveyEntity, 'survey')
-            .select(`survey.code,uploadDate,records,validPhones,smsSent,question.description question,
-            (SELECT COUNT(*) FROM survey_dtls WHERE survey=survey.code AND selected=1) samples`)
-            .innerJoin(QuestionEntity, 'question', 'question.code=survey.questionCode')
-            .orderBy('survey.code', 'DESC')
-            .execute();
-
+    async surveys(
+        @Args({ name: 'raw', type: () => Number }) raw: number
+    ): Promise<Array<Survey>> {
+        const surveys = await this.surveyRepo.find({
+            order: {
+                code: 'DESC'
+            },
+            where: {
+                raw
+            }
+        });
         return surveys;
     }
 
     @ResolveField(returns => [SurveySummary])
     async summary(@Parent() survey: Survey): Promise<Array<SurveySummary>> {
         const query = `
-        SELECT area, COUNT(*) records, 
+        SELECT ${survey.ward !== 'ALL' ? 'pollingStation' : 'ward'} area, COUNT(*) records, 
         (COUNT(IF(selected=1, 1, null))) samples
         FROM survey_dtls
         WHERE survey=${survey.code}
-        GROUP BY survey_dtls.area
-        HAVING (COUNT(IF(selected=1, 1, null))) > 0`;
+        GROUP BY survey_dtls.${survey.ward !== 'ALL' ? 'pollingStation' : 'ward'}
+        `;
         const data = await getManager().query(query);
-
-        return data;
-    }
-
-    @ResolveField(returns => [SurveyData])
-    async raw(
-        @Parent() survey: Survey,
-        @Args({ name: 'page', type: () => Number, nullable: true }) page: number
-    ): Promise<Array<SurveyData>> {
-        if (!page) {
-            page = 1;
-        }
-        const PAGE_SIZE = 40;
-        const data = await this.surveyDetailsRepo.find({
-            where: {
-                survey: survey.code
-            },
-            skip: (page - 1) * PAGE_SIZE,
-            take: PAGE_SIZE
-        });
 
         return data;
     }

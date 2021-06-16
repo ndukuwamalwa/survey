@@ -56,9 +56,6 @@ export class Survey {
     @Field(typ => Number)
     code: number;
 
-    @Field(typ => String)
-    uploadDate: string;
-
     @Field(typ => Number)
     records: number;
 
@@ -68,17 +65,17 @@ export class Survey {
     @Field(typ => String)
     question: string;
 
-    @Field(typ => Number)
+    @Field(typ => Boolean)
     smsSent: boolean;
 
-    @Field(typ => Number)
-    validPhones: number;
+    @Field(typ => String)
+    constituency: string;
 
-    @Field(typ => [SurveySummary], { nullable: true })
-    summary: Array<SurveySummary>;
+    @Field(typ => String)
+    ward: string;
 
-    @Field(typ => [SurveyData], { nullable: true })
-    raw: Array<SurveyData>
+    @Field(typ => String)
+    area: 'Constituency' | 'C.A.W' | '';
 }
 
 @ObjectType()
@@ -126,11 +123,50 @@ export class SurveySampleInput {
     idPassport: string;
 }
 
+@InputType()
+export class SampleInput {
+    @Field(typ => Number)
+    raw: number;
+
+    @Field(typ => String)
+    constituency: string;
+
+    @Field(typ => String)
+    ward: string;
+
+    @Field(typ => String)
+    question: string;
+}
+
 @ObjectType()
-export class Question {
+export class Constituency {
+    @Field(typ => String)
+    name: string;
+
+    @Field(typ => [String])
+    wards?: Array<string>;
+}
+
+@ObjectType()
+export class RawData {
     @Field(typ => Number)
     code: number;
 
     @Field(typ => String)
-    description: string;
+    uploadDate: string;
+
+    @Field(typ => Number)
+    records: number;
+
+    @Field(typ => Number)
+    validPhones: number;
+
+    @Field(typ => [Constituency])
+    constituencies?: Array<Constituency>;
+
+    @Field(typ => Number)
+    constituencyCount: number;
+
+    @Field(typ => Number)
+    wardCount: number;
 }

@@ -8,31 +8,16 @@ type SurveySummary {
   samples: Float!
 }
 
-type SurveyData {
-  code: Float!
-  county: String
-  constituency: String
-  area: String
-  pollingStation: String
-  dob: String
-  firstname: String
-  middlename: String
-  surname: String
-  gender: String
-  phone: String
-  idPassport: String
-}
-
 type Survey {
   code: Float!
-  uploadDate: String!
   records: Float!
   samples: Float!
   question: String!
-  smsSent: Float!
-  validPhones: Float!
-  summary: [SurveySummary!]
-  raw(page: Float): [SurveyData!]
+  smsSent: Boolean!
+  constituency: String!
+  ward: String!
+  area: String!
+  summary: [SurveySummary!]!
 }
 
 type MutationResponse {
@@ -40,9 +25,19 @@ type MutationResponse {
   message: String!
 }
 
-type Question {
+type Constituency {
+  name: String!
+  wards: [String!]!
+}
+
+type RawData {
   code: Float!
-  description: String!
+  uploadDate: String!
+  records: Float!
+  validPhones: Float!
+  constituencies: [Constituency!]!
+  constituencyCount: Float!
+  wardCount: Float!
 }
 
 type User {
@@ -58,19 +53,17 @@ type LoginResponse {
 type Query {
   user(username: String!): User!
   users: [User!]!
-  questions: [Question!]!
+  rawData: [RawData!]!
+  rawConstituencies(code: Float!): [Constituency!]!
   survey(code: Float!): Survey!
-  surveys: [Survey!]!
+  surveys(raw: Float!): [Survey!]!
 }
 
 type Mutation {
   login(password: String!, username: String!): LoginResponse!
   logout(token: String!): String!
-  uploadData(question: Float!, data: [SurveySampleInput!]!): MutationResponse!
-  sampleData(code: Float!): MutationResponse!
-  addQuestion(description: String!): MutationResponse!
-  updateQuestion(code: Float!, description: String!): MutationResponse!
-  deleteQuestion(code: Float!): MutationResponse!
+  uploadData(data: [SurveySampleInput!]!): MutationResponse!
+  sampleData(data: SampleInput!): MutationResponse!
   sendSMS(code: Float!): MutationResponse!
 }
 
@@ -86,4 +79,11 @@ input SurveySampleInput {
   gender: String
   phone: String
   idPassport: String
+}
+
+input SampleInput {
+  raw: Float!
+  constituency: String!
+  ward: String!
+  question: String!
 }

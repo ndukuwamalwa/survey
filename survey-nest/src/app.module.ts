@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { QuestionEntity, SurveyDetailEntity, SurveyEntity } from './entities/survey.entity';
+import { RawDataDetailEntity, RawDataEntity, SurveyDetailEntity, SurveyEntity } from './entities/survey.entity';
 import { UserEntity } from './entities/user.entity';
 import { SurveyResolver } from './resolvers/survey.resolver';
 import { UserResolver } from './resolvers/user.resolver';
@@ -29,9 +29,10 @@ import { ConfigModule } from '@nestjs/config';
     JwtModule.register({ secret: 'XASKAJKSJAHJAHGAFGUIOP2OI2YY' }),
     TypeOrmModule.forFeature([
       UserEntity,
-      QuestionEntity,
       SurveyEntity,
-      SurveyDetailEntity
+      SurveyDetailEntity,
+      RawDataDetailEntity,
+      RawDataEntity
     ]),
     ConfigModule.forRoot()
   ],

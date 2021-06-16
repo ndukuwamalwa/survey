@@ -13,11 +13,11 @@ export class PortalComponent implements OnInit {
 
   ngOnInit(): void {
     this.items = [
-      {
+      /*{
         label: 'Survey Questions',
         icon: PrimeIcons.QUESTION,
         routerLink: '/survey-questions'
-      },
+      },*/
       {
         label: 'Upload Data',
         icon: PrimeIcons.UPLOAD,

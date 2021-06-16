@@ -26,12 +26,22 @@ export interface LoginResponse {
 
 export interface Survey {
     code: number;
-    uploadDate: string;
     records: number;
-    sampes: number;
+    samples: number;
     question: string;
     smsSent: boolean;
+    constituency: string;
+    ward: string;
+    area: 'Constituency' | 'C.A.W' | '';
+}
+
+export interface RawData {
+    code: number;
+    uploadDate: string;
+    records: number;
     validPhones: number;
+    constituencyCount: number;
+    wardCount: number;
 }
 
 export interface SurveySummary {

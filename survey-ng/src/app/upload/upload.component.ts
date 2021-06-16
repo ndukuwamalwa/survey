@@ -2,8 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { ConfirmationService, MessageService, PrimeIcons } from 'primeng/api';
 import * as xlsx from "xlsx";
-import { Question, SurveyData } from '../model';
-import { GET_QUESTIONS_QUERY } from '../queries';
+import { SurveyData } from '../model';
 
 @Component({
   selector: 'app-upload',
@@ -17,8 +16,6 @@ export class UploadComponent implements OnInit {
   showDialog = false;
   uploadedData: Array<SurveyData> = [];
   isSaving = false;
-  questions: Array<Question> = [];
-  selectedQuestion: Question = undefined as any;
 
   constructor(
     private apollo: Apollo,
@@ -27,15 +24,6 @@ export class UploadComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.apollo.watchQuery({
-      query: GET_QUESTIONS_QUERY
-    })
-      .valueChanges
-      .subscribe(res => {
-        if (res.data) {
-          this.questions = (res.data as any).questions;
-        }
-      });
   }
 
   showSelectFile(): void {
@@ -134,20 +122,16 @@ export class UploadComponent implements OnInit {
       this.toggleDialog('No Records', 'Please upload the records.');
       return;
     }
-    if (!this.selectedQuestion) {
-      this.toggleDialog(`No Survey Question`, 'Select a survey question first');
-      return;
-    }
     this.confirmationService.confirm({
       icon: PrimeIcons.EXCLAMATION_TRIANGLE,
       header: 'Save Data?',
-      message: `Are you sure you want to save data with question "${this.selectedQuestion.description}"?`,
+      message: `Are you sure you want to save data?`,
       accept: () => {
         this.isSaving = true;
         const data = this.uploadedData;
         this.apollo.mutate({
           mutation: gql`mutation m($data: [SurveySampleInput!]!) {
-            uploadData(data: $data, question: ${this.selectedQuestion.code}) {
+            uploadData(data: $data) {
                 success
                 message
               }
@@ -165,7 +149,6 @@ export class UploadComponent implements OnInit {
                 this.toggleDialog(`Message Sending Failed`, result.message);
               } else {
                 this.uploadedData = [];
-                this.selectedQuestion = undefined as any;
                 this.messageService.add({ severity: 'success', summary: 'Upload Saved Successfully.', detail: result.message });
               }
             }

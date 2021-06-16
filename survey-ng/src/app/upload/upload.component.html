@@ -5,22 +5,9 @@
                 <input type="file" name="file" id="file" hidden="true" (change)="onFileSelected($event.target)"
                     accept="application/vnd.ms-excel, application/json, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, .csv">
                 <p-button label="Upload" icon="pi pi-upload" (onClick)="showSelectFile()" styleClass="p-button-success"
-                    class="p-mr-2" [loading]="loading"></p-button>
+                    class="p-mr-2" [loading]="loading || isSaving"></p-button>
                 <p-button label="Save" icon="pi pi-save" [loading]="isSaving" (onClick)="saveUpload()"></p-button>
             </div>
-            <p-dropdown [options]="questions" [(ngModel)]="selectedQuestion" optionLabel="description" [filter]="true"
-                filterBy="description" [showClear]="true" placeholder="Select a Question to Send">
-                <ng-template pTemplate="selectedItem">
-                    <div class="country-item country-item-value" *ngIf="selectedQuestion">
-                        <div>{{selectedQuestion.description}}</div>
-                    </div>
-                </ng-template>
-                <ng-template let-question pTemplate="item">
-                    <div class="country-item">
-                        <div>{{question.description}}</div>
-                    </div>
-                </ng-template>
-            </p-dropdown>
         </p-toolbar>
         <p-toast></p-toast>
         <p-confirmDialog></p-confirmDialog>

@@ -7,17 +7,36 @@ export const GET_QUESTIONS_QUERY = gql`{
     }
 }`
 
-export const GET_SURVEYS = gql`{
-    surveys {
+export const GET_RAW_DATA = gql`{
+    rawData {
         code
         uploadDate
+        records
+        validPhones
+        constituencyCount
+        wardCount
+    }
+}`;
+
+export const GET_CONSTITUENCIES = (code: number)=> gql`{
+    rawConstituencies(code: ${code}) {
+        name
+        wards
+    }
+}`;
+
+export const GET_SURVEYS = (raw: number) => gql`{
+    surveys(raw: ${raw}) {
+        code
         records
         samples
         question
         smsSent
-        validPhones
+        constituency
+        ward,
+        area
     }
-}`
+}`;
 
 export const GET_SURVEY_RAW = (survey: number, page: number) => gql`
 {

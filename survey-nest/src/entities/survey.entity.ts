@@ -1,19 +1,7 @@
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, Index, PrimaryColumn, PrimaryGeneratedColumn } from "typeorm";
 
-@Entity('question')
-export class QuestionEntity {
-    @PrimaryGeneratedColumn()
-    code: number;
-
-    @Column({ unique: true })
-    description: string;
-
-    @OneToMany(typ => SurveyEntity, typ => typ.question)
-    surveys: Promise<Array<SurveyEntity>>;
-}
-
-@Entity('survey')
-export class SurveyEntity {
+@Entity('raw_data')
+export class RawDataEntity {
     @PrimaryGeneratedColumn()
     code: number;
 
@@ -24,20 +12,17 @@ export class SurveyEntity {
     records: number;
 
     @Column()
-    samples: number;
-
-    @Column()
-    smsSent: boolean;
-
-    @Column()
     validPhones: number;
 
-    @ManyToOne(typ => QuestionEntity, typ => typ.surveys)
-    question: QuestionEntity;
+    @Column()
+    constituencyCount: number;
+    
+    @Column()
+    wardCount: number;
 }
 
-@Entity('survey_dtls')
-export class SurveyDetailEntity {
+@Entity('raw_data_dtls')
+export class RawDataDetailEntity {
     @PrimaryGeneratedColumn()
     code: number;
 
@@ -45,16 +30,13 @@ export class SurveyDetailEntity {
     phone: string;
 
     @Column()
-    survey: number;
-
-    @Column()
-    county: string;
+    raw: number;
 
     @Column()
     constituency: string;
 
     @Column()
-    area: string;
+    ward: string;
 
     @Column()
     pollingStation: string;
@@ -65,7 +47,7 @@ export class SurveyDetailEntity {
     @Column()
     firstname: string;
 
-    @Column()
+    @Column({ nullable: true })
     middlename: string;
 
     @Column()
@@ -77,6 +59,76 @@ export class SurveyDetailEntity {
     @Column()
     idPassport: string;
 
+    @Column()
+    phoneValid: boolean;
+}
+
+@Entity('constituency')
+@Index(['raw', 'name'], { unique: true })
+export class ConstituencyEntity {
+    @PrimaryGeneratedColumn()
+    code: number;
+
+    @Column()
+    raw: number;
+
+    @Column()
+    name: string;
+
+    @Column('json')
+    wards: Array<string>;
+}
+
+@Entity('survey')
+export class SurveyEntity {
+    @PrimaryGeneratedColumn()
+    code: number;
+
+    @Column()
+    records: number;
+
+    @Column()
+    samples: number;
+
+    @Column()
+    raw: number;
+
+    @Column()
+    question: string;
+
+    @Column()
+    smsSent: boolean;
+
+    @Column({ nullable: true })
+    constituency: string;
+
+    @Column({ nullable: true })
+    ward: string;
+
+    @Column({ nullable: true })
+    area: 'Constituency' | 'C.A.W' | '';
+}
+
+@Entity('survey_dtls')
+export class SurveyDetailEntity {
+    @PrimaryGeneratedColumn()
+    code: number;
+
+    @Column()
+    survey: number;
+
+    @Column()
+    phone: string;
+
+    @Column()
+    ward: string;
+
+    @Column()
+    pollingStation: string;
+
+    @Column()
+    selected: boolean;
+
     @Column({ nullable: true })
     response: string;
 
@@ -85,7 +137,4 @@ export class SurveyDetailEntity {
 
     @Column()
     responded: boolean;
-
-    @Column()
-    selected: boolean;
 }
