@@ -4,34 +4,36 @@
         <p-confirmDialog></p-confirmDialog>
         <h1 style="font-size: 14px;">Sampling and Sharing Survey Questions</h1>
         <main>
-            <h2>Raw Data</h2>
-            <p-table [value]="rawData" [loading]="isFetchingRaw" styleClass="p-datatable-striped"
-                [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'" [showCurrentPageReport]="true"
-                [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single" [(selection)]="selectedRaw"
-                (selectionChange)="onRawSelected()" [autoLayout]="true">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th></th>
-                        <th>Upload Date</th>
-                        <th>Record Count</th>
-                        <th>Phone Nos.</th>
-                        <th>Constituencies</th>
-                        <th>C.A.Ws</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-row>
-                    <tr>
-                        <td>
-                            <p-tableRadioButton [value]="row"></p-tableRadioButton>
-                        </td>
-                        <td>{{row.uploadDate | date}}</td>
-                        <td>{{row.records | number}}</td>
-                        <td>{{row.validPhones | number}}</td>
-                        <td>{{row.constituencyCount | number}}</td>
-                        <td>{{row.wardCount | number}}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+            <p-card>
+                <h2>Raw Data</h2>
+                <p-table [value]="rawData" [loading]="isFetchingRaw" styleClass="p-datatable-striped"
+                    [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'"
+                    [showCurrentPageReport]="true" [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single"
+                    [(selection)]="selectedRaw" (selectionChange)="onRawSelected()" [autoLayout]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th></th>
+                            <th>Upload Date</th>
+                            <th>Record Count</th>
+                            <th>Phone Nos.</th>
+                            <th>Constituencies</th>
+                            <th>C.A.Ws</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-row>
+                        <tr>
+                            <td>
+                                <p-tableRadioButton [value]="row"></p-tableRadioButton>
+                            </td>
+                            <td>{{row.uploadDate | date}}</td>
+                            <td>{{row.records | number}}</td>
+                            <td>{{row.validPhones | number}}</td>
+                            <td>{{row.constituencyCount | number}}</td>
+                            <td>{{row.wardCount | number}}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
             <p-dialog [modal]="true" [(visible)]="showAddSampling" header="New Sample">
                 <form (ngSubmit)="addSample(f3)" #f3="ngForm" ngNativeValidate>
                     <fieldset>
@@ -44,7 +46,8 @@
                     </fieldset>
                     <fieldset>
                         <label for="ward">County Assemply Ward</label>
-                        <select name="ward" required id="ward" ngModel="ALL" [disabled]="!selectedContituency" pInputText>
+                        <select name="ward" required id="ward" ngModel="ALL" [disabled]="!selectedContituency"
+                            pInputText>
                             <option value="ALL">None (Whole Constituency)</option>
                             <option [value]="w" *ngFor="let w of wards">{{w}}</option>
                         </select>
@@ -59,67 +62,73 @@
                     </fieldset>
                 </form>
             </p-dialog>
-            <p-toolbar>
-                <div class="p-toolbar-group-left">
-                    <p-button label="New Sample" (onClick)="openAddNewSampling()" [disabled]="!selectedRaw"></p-button>
-                </div>
-            </p-toolbar>
-            <p-table [value]="surveys" [loading]="isFetchingSurveys" styleClass="p-datatable-striped"
-                [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'" [showCurrentPageReport]="true"
-                [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single" [(selection)]="selectedSurvey"
-                (selectionChange)="onSurveySelected()" [autoLayout]="true">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th></th>
-                        <th>Constituency</th>
-                        <th>C.A.W</th>
-                        <th>Record Count</th>
-                        <th>Sample Size</th>
-                        <th>Sent To</th>
-                        <th></th>
-                        <th>Question</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-survey>
-                    <tr>
-                        <td>
-                            <p-tableRadioButton [value]="survey" [disabled]="survey.samples === 0"></p-tableRadioButton>
-                        </td>
-                        <td>{{survey.constituency | titlecase}}</td>
-                        <td>{{survey.ward | titlecase}}</td>
-                        <td>{{survey.records | number}}</td>
-                        <td>{{survey.samples | number}}</td>
-                        <td>{{survey.validPhones | number}}</td>
-                        <td>
-                            <p-button *ngIf="survey.samples > 0 && !survey.smsSent" [loading]="isSendingSMS" label="SMS"
-                                icon="pi pi-envelope" (onClick)="sendSMS(survey)" styleClass="p-button-success">
-                            </p-button>
-                        </td>
-                        <td>{{survey.question}}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
             <br>
-            <h2>Sampling Details</h2>
-            <p-divider></p-divider>
-            <p-table [value]="details" [paginator]="true" [rows]="30" [loading]="isGettingSamples"
-                [paginatorPosition]="'top'" styleClass="p-datatable-striped" [rowsPerPageOptions]="[10,20,30]"
-                [autoLayout]="true" [resizableColumns]="true">
-                <ng-template pTemplate="header">
-                    <tr>
-                        <th>{{selectedAreaName}}</th>
-                        <th>Total Records</th>
-                        <th>Samples</th>
-                    </tr>
-                </ng-template>
-                <ng-template pTemplate="body" let-detail>
-                    <tr>
-                        <td>{{detail.area}}</td>
-                        <td>{{detail.records | number}}</td>
-                        <td>{{detail.samples | number}}</td>
-                    </tr>
-                </ng-template>
-            </p-table>
+            <p-card>
+                <p-toolbar>
+                    <div class="p-toolbar-group-left">
+                        <p-button label="New Sample" (onClick)="openAddNewSampling()" [disabled]="!selectedRaw">
+                        </p-button>
+                    </div>
+                </p-toolbar>
+                <p-table [value]="surveys" [loading]="isFetchingSurveys" styleClass="p-datatable-striped"
+                    [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'"
+                    [showCurrentPageReport]="true" [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single"
+                    [(selection)]="selectedSurvey" (selectionChange)="onSurveySelected()" [autoLayout]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th></th>
+                            <th>Constituency</th>
+                            <th>C.A.W</th>
+                            <th>Record Count</th>
+                            <th>Sample Size</th>
+                            <th></th>
+                            <th>Question</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-survey>
+                        <tr>
+                            <td>
+                                <p-tableRadioButton [value]="survey" [disabled]="survey.samples === 0">
+                                </p-tableRadioButton>
+                            </td>
+                            <td>{{survey.constituency | titlecase}}</td>
+                            <td>{{survey.ward | titlecase}}</td>
+                            <td>{{survey.records | number}}</td>
+                            <td>{{survey.samples | number}}</td>
+                            <td>
+                                <p-button *ngIf="survey.samples > 0 && !survey.smsSent" [loading]="isSendingSMS"
+                                    label="SMS" icon="pi pi-envelope" (onClick)="sendSMS(survey)"
+                                    styleClass="p-button-success">
+                                </p-button>
+                            </td>
+                            <td>{{survey.question}}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
+            <br>
+            <p-card>
+                <h2>Sampling Details</h2>
+                <p-divider></p-divider>
+                <p-table [value]="details" [paginator]="true" [rows]="30" [loading]="isGettingSamples"
+                    [paginatorPosition]="'top'" styleClass="p-datatable-striped" [rowsPerPageOptions]="[10,20,30]"
+                    [autoLayout]="true" [resizableColumns]="true">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>{{selectedAreaName}}</th>
+                            <th>Total Records</th>
+                            <th>Samples</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-detail>
+                        <tr>
+                            <td>{{detail.area}}</td>
+                            <td>{{detail.records | number}}</td>
+                            <td>{{detail.samples | number}}</td>
+                        </tr>
+                    </ng-template>
+                </p-table>
+            </p-card>
         </main>
     </ng-container>
 </app-portal>

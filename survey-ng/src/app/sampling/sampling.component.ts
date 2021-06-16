@@ -154,10 +154,11 @@ export class SamplingComponent implements OnInit {
         }
       });
     this.isFetchingSurveys = true;
-    this.apollo.query({
+    this.apollo.watchQuery({
       query: GET_SURVEYS(this.selectedRaw.code),
       fetchPolicy: 'network-only'
     })
+      .valueChanges
       .subscribe(res => {
         this.isFetchingSurveys = false;
         if (res.data) {

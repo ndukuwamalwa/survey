@@ -75,7 +75,7 @@ export class Survey {
     ward: string;
 
     @Field(typ => String)
-    area: 'Constituency' | 'C.A.W' | '';
+    area: 'Constituency' | 'C.A.W' | 'Polling Station';
 }
 
 @ObjectType()

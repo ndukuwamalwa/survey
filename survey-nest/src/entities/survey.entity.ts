@@ -106,7 +106,7 @@ export class SurveyEntity {
     ward: string;
 
     @Column({ nullable: true })
-    area: 'Constituency' | 'C.A.W' | '';
+    area: 'Constituency' | 'C.A.W' | 'Polling Station';
 }
 
 @Entity('survey_dtls')

@@ -133,7 +133,7 @@ export class SurveyResolver {
         if (isPerConstituency) {
             if (isPerWard) {
                 // Sampling per C.A.W
-                query = `SELECT pollingStation, COUNT(*) count FROM raw_data_dtls WHERE raw=? AND constituency=? AND ward=? GROUP BY ward`;
+                query = `SELECT pollingStation, COUNT(*) count FROM raw_data_dtls WHERE raw=? AND constituency=? AND ward=? GROUP BY pollingStation`;
                 params.push(data.raw, data.constituency, data.ward);
             } else {
                 // Sampling per Constituency
@@ -158,7 +158,7 @@ export class SurveyResolver {
             smsSent: false,
             constituency: data.constituency,
             ward: data.ward,
-            area: isPerWard ? 'C.A.W' : isPerConstituency ? 'Constituency' : '',
+            area: isPerWard ? 'Polling Station' : isPerConstituency ? 'C.A.W' : 'Constituency',
             raw: data.raw
         };
         survey = await this.surveyRepo.save(survey);
