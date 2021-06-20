@@ -29,6 +29,7 @@ import { SamplingComponent } from './sampling/sampling.component';
 import { DividerModule } from 'primeng/divider';
 import { CardModule } from 'primeng/card';
 import { AuthGuard } from './guards/auth.guard';
+import { ChartModule } from 'primeng/chart';
 
 @NgModule({
   declarations: [
@@ -57,6 +58,7 @@ import { AuthGuard } from './guards/auth.guard';
     InputTextModule,
     DividerModule,
     CardModule,
+    ChartModule,
     RouterModule.forRoot([
       {
         path: '',

@@ -1,11 +1,11 @@
 nav {
     position: fixed;
     left: 0;
-    width: var(--nav-width);
+    width: 250px;
 }
 
 main {
     position: absolute;
-    width: calc(100% - (var(--nav-width) + 20px));
+    width: calc(100% - 250px - 10px);
     right: 0;
 }

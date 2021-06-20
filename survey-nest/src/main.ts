@@ -7,15 +7,15 @@ import { EncryptionService } from './services/encryption.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(bodyParser.json({limit: '50mb'}));
-  app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   app.enableCors();
 
   // Create a default user
-  const password = EncryptionService.encryptPassword('12345678');
+  const password = EncryptionService.encryptPassword('Admin@2021');
   const user: UserEntity = {
     username: 'admin',
-    password
+    password,
   };
   const exist = await getManager().getRepository(UserEntity).findOne({ username: 'admin' });
   if (!exist) {

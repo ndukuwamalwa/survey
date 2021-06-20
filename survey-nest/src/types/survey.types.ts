@@ -1,172 +1,202 @@
-import { InputType, ObjectType, Field } from "@nestjs/graphql";
+import { InputType, ObjectType, Field, Int } from "@nestjs/graphql";
 
 @ObjectType()
 export class SurveySummary {
-    @Field(typ => String)
+    @Field(() => String)
     area: string;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     records: string;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     samples: string;
 }
 
 @ObjectType()
 export class SurveyData {
-    @Field(typ => Number)
+    @Field(() => Number)
     code: number;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     county: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     constituency: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     area: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     pollingStation: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     dob: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     firstname: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     middlename: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     surname: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     gender: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     phone: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     idPassport: string;
 }
 
 @ObjectType()
 export class Survey {
-    @Field(typ => Number)
+    @Field(() => Number)
     code: number;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     records: number;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     samples: number;
 
-    @Field(typ => String)
+    @Field(() => String)
     question: string;
 
-    @Field(typ => Boolean)
+    @Field(() => Boolean)
     smsSent: boolean;
 
-    @Field(typ => String)
+    @Field(() => String)
     constituency: string;
 
-    @Field(typ => String)
+    @Field(() => String)
     ward: string;
 
-    @Field(typ => String)
+    @Field(() => String)
     area: 'Constituency' | 'C.A.W' | 'Polling Station';
 }
 
 @ObjectType()
 export class MutationResponse {
-    @Field(typ => Boolean)
+    @Field(() => Boolean)
     success: boolean;
 
-    @Field(typ => String)
+    @Field(() => String)
     message: string;
 }
 
 @InputType()
 export class SurveySampleInput {
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     county: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     constituency: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     area: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     pollingStation: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     dob: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     firstname: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     middlename: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     surname: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     gender: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     phone: string;
 
-    @Field(typ => String, { nullable: true })
+    @Field(() => String, { nullable: true })
     idPassport: string;
 }
 
 @InputType()
 export class SampleInput {
-    @Field(typ => Number)
+    @Field(() => Number)
     raw: number;
 
-    @Field(typ => String)
+    @Field(() => String)
     constituency: string;
 
-    @Field(typ => String)
+    @Field(() => String)
     ward: string;
 
-    @Field(typ => String)
+    @Field(() => String)
     question: string;
+
+    @Field(() => [String])
+    choices: Array<string>;
 }
 
 @ObjectType()
 export class Constituency {
-    @Field(typ => String)
+    @Field(() => String)
     name: string;
 
-    @Field(typ => [String])
+    @Field(() => [String])
     wards?: Array<string>;
 }
 
 @ObjectType()
 export class RawData {
-    @Field(typ => Number)
+    @Field(() => Number)
     code: number;
 
-    @Field(typ => String)
+    @Field(() => String)
     uploadDate: string;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     records: number;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     validPhones: number;
 
-    @Field(typ => [Constituency])
+    @Field(() => [Constituency])
     constituencies?: Array<Constituency>;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     constituencyCount: number;
 
-    @Field(typ => Number)
+    @Field(() => Number)
     wardCount: number;
+}
+
+@ObjectType()
+export class SurveyResponseSummaryDtl {
+    @Field(() => String, { nullable: true })
+    choice: string;
+
+    @Field(() => Int)
+    votes: number;
+}
+
+@ObjectType()
+export class SurveyResponseSummary {
+    @Field(() => String)
+    area: string;
+
+    @Field(() => [SurveyResponseSummaryDtl])
+    responses: Array<SurveyResponseSummaryDtl>;
+}
+
+@ObjectType()
+export class SurveyResponseChartData {
+    @Field(() => [SurveyResponseSummaryDtl])
+    summary: Array<SurveyResponseSummaryDtl>;
+
+    @Field(() => [SurveyResponseSummary])
+    details: Array<SurveyResponseSummary>;
 }

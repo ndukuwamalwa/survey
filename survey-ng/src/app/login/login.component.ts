@@ -52,4 +52,10 @@ export class LoginComponent implements OnInit {
       });
   }
 
+  onFieldTouch() {
+    if (this.isError) {
+      this.isError = false;
+    }
+  }
+
 }

@@ -1,28 +1,29 @@
 <main>
-    <div class="card">
+    <p-card header="Login" [style]="{'width': '350px'}">
         <form #loginForm="ngForm" ngNativeValidate (ngSubmit)="login(loginForm.value)">
-            <fieldset>
-                <h1>Login</h1>
-            </fieldset>
-            <fieldset>
-                <span class="p-float-label">
-                    <input type="text" name="username" id="username" autocomplete="off" required ngModel pInputText>
-                    <label for="username">Username</label>
-                </span>
-            </fieldset>
-            <fieldset>
-                <span class="p-float-label">
-                    <input type="password" name="password" id="password" required ngModel pInputText>
-                    <label for="password">Password</label>
-                </span>
-            </fieldset>
-            <fieldset *ngIf="isError">
-                <p-message [severity]="'error'" styleClass="p-mr-2" [text]="errorMessage" [style]="{ 'width': '100%' }">
-                </p-message>
-            </fieldset>
-            <fieldset>
-                <button label="Login" icon="pi pi-sign-in" [loading]="loading" pButton></button>
-            </fieldset>
+            <div class="p-fluid">
+                <div class="p-filed">
+                    <span class="p-float-label">
+                        <input type="text" (keyup)="onFieldTouch()" name="username" id="username" autocomplete="off"
+                            required ngModel pInputText>
+                        <label for="username">Username</label>
+                    </span>
+                </div>
+                <br>
+                <div class="p-field">
+                    <span class="p-float-label">
+                        <input type="password" (keyup)="onFieldTouch()" name="password" id="password" required ngModel
+                            pInputText>
+                        <label for="password">Password</label>
+                    </span>
+                </div>
+            </div>
+            <br>
+            <p-message *ngIf="isError" [severity]="'error'" styleClass="p-mr-2" [text]="errorMessage"
+                [style]="{ 'width': '100%' }">
+            </p-message>
+            <br *ngIf="isError">
+            <button label="Login" icon="pi pi-sign-in" [loading]="loading" pButton></button>
         </form>
-    </div>
+    </p-card>
 </main>

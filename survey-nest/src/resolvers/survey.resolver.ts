@@ -3,10 +3,18 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { ConstituencyEntity, RawDataDetailEntity, RawDataEntity, SurveyDetailEntity, SurveyEntity } from "src/entities/survey.entity";
 import { SmsService } from "src/services/sms.service";
 import { UserService } from "src/services/user.service";
-import { Constituency, MutationResponse, RawData, SampleInput, Survey, SurveyData, SurveySampleInput, SurveySummary } from "src/types/survey.types";
-import { getManager, In, Not, Repository } from "typeorm";
+import {
+    Constituency,
+    MutationResponse,
+    RawData,
+    SampleInput,
+    Survey, SurveyResponseChartData, SurveyResponseSummary, SurveyResponseSummaryDtl,
+    SurveySampleInput,
+    SurveySummary
+} from "src/types/survey.types";
+import { getManager, Repository } from "typeorm";
 
-@Resolver(of => Survey)
+@Resolver(() => Survey)
 export class SurveyResolver {
     constructor(
         @InjectRepository(SurveyEntity) private surveyRepo: Repository<SurveyEntity>,
@@ -16,7 +24,7 @@ export class SurveyResolver {
         private smsService: SmsService
     ) { }
 
-    @Mutation(returns => MutationResponse)
+    @Mutation(() => MutationResponse)
     async uploadData(
         @Args({ name: 'data', type: () => [SurveySampleInput] }) data: Array<SurveySampleInput>
     ): Promise<MutationResponse> {
@@ -30,8 +38,8 @@ export class SurveyResolver {
         }
         let counter = 0;
         const details: Array<RawDataDetailEntity> = data.map(v => {
-            const valid = this.isKePhoneNo(v.phone);
-            const phone = valid ? this.formatKePhone(v.phone) : v.phone;
+            const valid = SurveyResolver.isKePhoneNo(v.phone);
+            const phone = valid ? SurveyResolver.formatKePhone(v.phone) : v.phone;
             if (valid) {
                 counter += 1;
             }
@@ -113,7 +121,7 @@ export class SurveyResolver {
 
     }
 
-    @Mutation(returns => MutationResponse)
+    @Mutation(() => MutationResponse)
     async sampleData(
         @Args({ name: 'data', type: () => SampleInput }) data: SampleInput
     ): Promise<MutationResponse> {
@@ -159,7 +167,8 @@ export class SurveyResolver {
             constituency: data.constituency,
             ward: data.ward,
             area: isPerWard ? 'Polling Station' : isPerConstituency ? 'C.A.W' : 'Constituency',
-            raw: data.raw
+            raw: data.raw,
+            choices: data.choices
         };
         survey = await this.surveyRepo.save(survey);
         let records = 0, samples = 0;
@@ -177,7 +186,7 @@ export class SurveyResolver {
                     where: {
                         raw: data.raw, constituency: data.constituency, ward: item.ward
                     },
-                    select: ['code', 'phone', 'pollingStation', 'ward']
+                    select: ['code', 'phone', 'pollingStation', 'ward', 'constituency']
                 });
             } else {
                 items = await this.rawDtlRepo.find({
@@ -200,7 +209,9 @@ export class SurveyResolver {
                 dateResponded: null,
                 pollingStation: v.pollingStation,
                 ward: v.ward,
-                selected: sampledCodes.includes(v.code)
+                selected: sampledCodes.includes(v.code),
+                choice: null,
+                constituency: v.constituency
             }));
             records += dtls.length;
             samples += sSize;
@@ -223,9 +234,8 @@ export class SurveyResolver {
         const numerator1 = zScore ** 2 * p * (1 - p);
         const numerator = numerator1 / e2;
         const denominator = 1 + (numerator / N);
-        const size = Math.ceil(numerator / denominator);
 
-        return size;
+        return Math.ceil(numerator / denominator);
     }
 
     getRandomIndices(size: number): Array<number> {
@@ -240,7 +250,7 @@ export class SurveyResolver {
         return values;
     }
 
-    private isKePhoneNo(value: string): boolean {
+    static isKePhoneNo(value: string): boolean {
         if (!value || value.trim().length < 9) {
             return false;
         }
@@ -269,7 +279,7 @@ export class SurveyResolver {
         return lastNine.test(value);
     }
 
-    private formatKePhone(value: string): string {
+    static formatKePhone(value: string): string {
         // This functions assumes the phone number has already been validated
         value = value.trim().replace(' ', '');
         if (value.length === 13) {
@@ -286,7 +296,7 @@ export class SurveyResolver {
         }
     }
 
-    @Mutation(returns => MutationResponse)
+    @Mutation(() => MutationResponse)
     async sendSMS(
         @Args({ name: 'code', type: () => Number }) code: number
     ): Promise<MutationResponse> {
@@ -313,42 +323,39 @@ export class SurveyResolver {
         };
     }
 
-    @Query(returns => [RawData])
+    @Query(() => [RawData])
     async rawData(): Promise<Array<RawData>> {
-        const rawData = await this.rawRepo.find({
+        return await this.rawRepo.find({
             order: {
                 uploadDate: 'DESC'
             }
         });
-        return rawData;
     }
 
-    @Query(returns => [Constituency])
+    @Query(() => [Constituency])
     async rawConstituencies(
         @Args({ name: 'code', type: () => Number }) code: number
     ): Promise<Array<Constituency>> {
-        const data = await getManager().getRepository(ConstituencyEntity).find({
+        return await getManager().getRepository(ConstituencyEntity).find({
             where: {
                 raw: code
             },
             select: ['name', 'wards']
         });
-        return data;
     }
 
-    @Query(returns => Survey)
+    @Query(() => Survey)
     async survey(
         @Args({ name: 'code', type: () => Number }) code: number
     ): Promise<Survey> {
-        const survey = await this.surveyRepo.findOne({ code });
-        return survey;
+        return await this.surveyRepo.findOne({ code });
     }
 
-    @Query(returns => [Survey])
+    @Query(() => [Survey])
     async surveys(
         @Args({ name: 'raw', type: () => Number }) raw: number
     ): Promise<Array<Survey>> {
-        const surveys = await this.surveyRepo.find({
+        return await this.surveyRepo.find({
             order: {
                 code: 'DESC'
             },
@@ -356,10 +363,9 @@ export class SurveyResolver {
                 raw
             }
         });
-        return surveys;
     }
 
-    @ResolveField(returns => [SurveySummary])
+    @ResolveField(() => [SurveySummary])
     async summary(@Parent() survey: Survey): Promise<Array<SurveySummary>> {
         const query = `
         SELECT ${survey.ward !== 'ALL' ? 'pollingStation' : 'ward'} area, COUNT(*) records, 
@@ -368,8 +374,126 @@ export class SurveyResolver {
         WHERE survey=${survey.code}
         GROUP BY survey_dtls.${survey.ward !== 'ALL' ? 'pollingStation' : 'ward'}
         `;
-        const data = await getManager().query(query);
+        return await getManager().query(query);
+    }
 
-        return data;
+    @Query(() => SurveyResponseChartData)
+    async generalResponseOverview(
+      @Args({ name: 'code', type: () => Number }) code: number
+    ): Promise<SurveyResponseChartData> {
+        const survey = await this.surveyRepo.findOne({ code });
+        if (!survey) {
+            return {
+                summary: [],
+                details: []
+            };
+        }
+        const summary: Array<SurveyResponseSummaryDtl> = await getManager().query(`
+            SELECT choice, COUNT(*) votes
+            FROM survey_dtls 
+            WHERE survey=? AND selected=1 AND responded=1
+        `, [code]);
+        console.table(summary);
+        const details: Array<SurveyResponseSummary> = [];
+        if (survey.area === 'Constituency') {
+            if (survey.constituency === 'ALL') {
+                const areas: Array<string> = (await getManager().query(`
+                SELECT DISTINCT constituency
+                FROM survey_dtls
+                WHERE survey=?
+                AND selected=1
+                AND responded=1
+            `, [code])).map(v => v.constituency);
+                for (let area of areas) {
+                    const responses: Array<SurveyResponseSummaryDtl> = await getManager().query(`
+                    SELECT choice, SUM(*) votes
+                    FROM survey_dtls
+                    WHERE survey=?
+                    AND selected=1
+                    AND responded=1
+                    AND constituency="${area}"
+                `);
+                    details.push({
+                        area,
+                        responses
+                    });
+                }
+            } else {
+                const areas: Array<string> = (await getManager().query(`
+                SELECT DISTINCT ward
+                FROM survey_dtls
+                WHERE survey=?
+                AND selected=1
+                AND responded=1
+                AND constituency="${survey.constituency}"
+            `, [code])).map(v => v.ward);
+                for (let area of areas) {
+                    const responses: Array<SurveyResponseSummaryDtl> = await getManager().query(`
+                    SELECT choice, SUM(*) votes
+                    FROM survey_dtls
+                    WHERE survey=?
+                    AND selected=1
+                    AND responded=1
+                    AND ward="${area}"
+                    AND constituency="${survey.constituency}"
+                `);
+                    details.push({
+                        area,
+                        responses
+                    });
+                }
+            }
+        } else if (survey.area === 'C.A.W') {
+            if (survey.ward === 'ALL') {
+                const areas: Array<string> = (await getManager().query(`
+                SELECT DISTINCT pollingStation
+                FROM survey_dtls
+                WHERE survey=?
+                AND selected=1
+                AND responded=1
+            `, [code])).map(v => v.pollingStation);
+                for (let area of areas) {
+                    const responses: Array<SurveyResponseSummaryDtl> = await getManager().query(`
+                    SELECT choice, SUM(*) votes
+                    FROM survey_dtls
+                    WHERE survey=?
+                    AND selected=1
+                    AND responded=1
+                `);
+                    details.push({
+                        area,
+                        responses
+                    });
+                }
+            } else {
+                const areas: Array<string> = (await getManager().query(`
+                SELECT DISTINCT pollingStation
+                FROM survey_dtls
+                WHERE survey=?
+                AND selected=1
+                AND responded=1
+                AND ward="${survey.ward}"
+            `, [code])).map(v => v.pollingStation);
+                for (let area of areas) {
+                    const responses: Array<SurveyResponseSummaryDtl> = await getManager().query(`
+                    SELECT choice, SUM(*) votes
+                    FROM survey_dtls
+                    WHERE survey=?
+                    AND selected=1
+                    AND responded=1
+                    AND ward="${area}"
+                `);
+                    details.push({
+                        area,
+                        responses
+                    });
+                }
+            }
+        }
+
+        return {
+            summary,
+            details
+        };
     }
 }

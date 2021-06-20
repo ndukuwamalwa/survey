@@ -96,6 +96,9 @@ export class SurveyEntity {
     @Column()
     question: string;
 
+    @Column('json')
+    choices: Array<string>;
+
     @Column()
     smsSent: boolean;
 
@@ -121,6 +124,9 @@ export class SurveyDetailEntity {
     phone: string;
 
     @Column()
+    constituency: string;
+
+    @Column()
     ward: string;
 
     @Column()
@@ -131,6 +137,9 @@ export class SurveyDetailEntity {
 
     @Column({ nullable: true })
     response: string;
+
+    @Column({ nullable: true })
+    choice: string;
 
     @Column({ type: 'timestamp', nullable: true })
     dateResponded: string;

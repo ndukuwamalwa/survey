@@ -40,6 +40,21 @@ type RawData {
   wardCount: Float!
 }
 
+type SurveyResponseSummaryDtl {
+  choice: String
+  votes: Int!
+}
+
+type SurveyResponseSummary {
+  area: String!
+  responses: [SurveyResponseSummaryDtl!]!
+}
+
+type SurveyResponseChartData {
+  summary: [SurveyResponseSummaryDtl!]!
+  details: [SurveyResponseSummary!]!
+}
+
 type User {
   username: String!
 }
@@ -57,6 +72,7 @@ type Query {
   rawConstituencies(code: Float!): [Constituency!]!
   survey(code: Float!): Survey!
   surveys(raw: Float!): [Survey!]!
+  generalResponseOverview(code: Float!): SurveyResponseChartData!
 }
 
 type Mutation {
@@ -86,4 +102,5 @@ input SampleInput {
   constituency: String!
   ward: String!
   question: String!
+  choices: [String!]!
 }

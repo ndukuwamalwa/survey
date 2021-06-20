@@ -2,10 +2,8 @@
     <ng-container class="appContent">
         <p-toast></p-toast>
         <p-confirmDialog></p-confirmDialog>
-        <h1 style="font-size: 14px;">Sampling and Sharing Survey Questions</h1>
-        <main>
-            <p-card>
-                <h2>Raw Data</h2>
+        <p-card header="Sampling and Sharing Survey Questions">
+            <p-card header="Raw Data">
                 <p-table [value]="rawData" [loading]="isFetchingRaw" styleClass="p-datatable-striped"
                     [resizableColumns]="true" [paginator]="true" [paginatorPosition]="'top'"
                     [showCurrentPageReport]="true" [rows]="10" [rowsPerPageOptions]="[10,20]" selectionMode="single"
@@ -36,34 +34,62 @@
             </p-card>
             <p-dialog [modal]="true" [(visible)]="showAddSampling" header="New Sample">
                 <form (ngSubmit)="addSample(f3)" #f3="ngForm" ngNativeValidate>
-                    <fieldset>
-                        <label for="constituency">Constituency</label>
-                        <select name="constituency" id="constituency" (change)="onConstituencySelected($event.target)"
-                            required ngModel="ALL" pInputText>
-                            <option value="ALL">None (Whole County)</option>
-                            <option [value]="c.name" *ngFor="let c of constituencies">{{c.name}}</option>
-                        </select>
-                    </fieldset>
-                    <fieldset>
-                        <label for="ward">County Assemply Ward</label>
-                        <select name="ward" required id="ward" ngModel="ALL" [disabled]="!selectedContituency"
-                            pInputText>
-                            <option value="ALL">None (Whole Constituency)</option>
-                            <option [value]="w" *ngFor="let w of wards">{{w}}</option>
-                        </select>
-                    </fieldset>
-                    <fieldset>
-                        <label for="question">Question</label>
-                        <textarea name="question" id="question" required pInputText ngModel
-                            style="height: 160px;width: 380px;resize: none;"></textarea>
-                    </fieldset>
-                    <fieldset>
-                        <button pButton label="Save and Sample" icon="pi pi-save" [loading]="isSavingSample"></button>
-                    </fieldset>
+                    <div class="p-fluid" style="display: flex;">
+                        <div class="p-field" style="margin-right: 10px;">
+                            <label for="constituency">Constituency</label>
+                            <select name="constituency" id="constituency"
+                                (change)="onConstituencySelected($event.target)" required ngModel="ALL" pInputText>
+                                <option value="ALL">None (Whole County)</option>
+                                <option [value]="c.name" *ngFor="let c of constituencies">{{c.name}}</option>
+                            </select>
+                        </div>
+                        <div class="p-field" style="margin-right: 10px;">
+                            <label for="ward">County Assemply Ward</label>
+                            <select name="ward" required id="ward" ngModel="ALL" [disabled]="!selectedContituency"
+                                pInputText>
+                                <option value="ALL">None (Whole Constituency)</option>
+                                <option [value]="w" *ngFor="let w of wards">{{w}}</option>
+                            </select>
+                        </div>
+                        <div class="p-field" style="margin-right: 10px;">
+                            <label for="ordering">Choices Ordering</label>
+                            <select name="ordering" id="ordering" (change)="onOrderTypeChange()" required #ordering
+                                pInputText [(ngModel)]="orderType">
+                                <option value="A">A, B, C...</option>
+                                <option value="1">1, 2, 3...</option>
+                            </select>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="p-fluid" style="display: flex;justify-content: space-between;">
+                        <div class="p-field" style="display: flex;flex-direction: column;flex-basis: 49%;">
+                            <label for="question">Question</label>
+                            <textarea name="question" id="question" required pInputText [(ngModel)]="enteredQuestion"
+                                style="height: 70px;resize: none;" [disabled]="!ordering.value"
+                                placeholder="Be brief and to the point" (keyup)="onQuestionInput()"
+                                (change)="onQuestionInput()"></textarea>
+                        </div>
+                        <div class="p-field" style="display: flex;flex-direction: column;flex-basis: 49%;">
+                            <label for="choices">Respondent Choices</label>
+                            <textarea name="choices" id="choices" [disabled]="!ordering.value" required pInputText
+                                [(ngModel)]="enteredChoices" style="height: 70px;resize: none;"
+                                placeholder="Input choices separated by a comma(,)" (keyup)="onChoiceInput()"
+                                (change)="onChoiceInput()"></textarea>
+                        </div>
+                    </div>
+                    <br>
+                    <div class="p-fluid">
+                        <p>{{enteredQuestion}}</p>
+                        <ul style="list-style-type: none;padding: 0;">
+                            <li *ngFor="let choice of choices">{{choice}}</li>
+                        </ul>
+                    </div>
+                    <br>
+                    <button pButton label="Save and Sample" icon="pi pi-save" [loading]="isSavingSample"></button>
                 </form>
             </p-dialog>
             <br>
-            <p-card>
+            <p-card header="Samples">
                 <p-toolbar>
                     <div class="p-toolbar-group-left">
                         <p-button label="New Sample" (onClick)="openAddNewSampling()" [disabled]="!selectedRaw">
@@ -107,9 +133,7 @@
                 </p-table>
             </p-card>
             <br>
-            <p-card>
-                <h2>Sampling Details</h2>
-                <p-divider></p-divider>
+            <p-card header="Sampling Details">
                 <p-table [value]="details" [paginator]="true" [rows]="30" [loading]="isGettingSamples"
                     [paginatorPosition]="'top'" styleClass="p-datatable-striped" [rowsPerPageOptions]="[10,20,30]"
                     [autoLayout]="true" [resizableColumns]="true">
@@ -129,6 +153,6 @@
                     </ng-template>
                 </p-table>
             </p-card>
-        </main>
+        </p-card>
     </ng-container>
 </app-portal>

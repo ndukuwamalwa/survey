@@ -28,6 +28,11 @@ export class SamplingComponent implements OnInit {
   isSavingSample = false;
   selectedAreaName: 'Constituency' | 'C.A.W' | '' = '';
   wards: Array<string> = [];
+  choices: Array<string> = [];
+  abcd: Array<string> = [];
+  enteredQuestion = '';
+  enteredChoices = '';
+  orderType: 'A' | 1 | '' = '';
 
   constructor(
     private apollo: Apollo,
@@ -53,6 +58,9 @@ export class SamplingComponent implements OnInit {
         this.messageService.add({ severity: 'error', summary: 'Fetch Error', detail: 'Failed to get uploaded data' });
         this.isFetchingRaw = false;
       });
+    for (let i = 65; i <= 90; i ++) {
+      this.abcd.push(String.fromCharCode(i));
+    }
   }
 
   addSample(form: NgForm): void {
@@ -75,7 +83,8 @@ export class SamplingComponent implements OnInit {
           raw: this.selectedRaw.code,
           constituency,
           ward,
-          question
+          question,
+          choices: this.choices
         }
       }
     })
@@ -182,6 +191,38 @@ export class SamplingComponent implements OnInit {
       this.wards = [];
       this.selectedContituency = undefined as any;
     }
+  }
+
+  getChoices(): Array<string> {
+    let choices = this.enteredChoices;
+    if (!choices) {
+      choices = '';
+    }
+    if (choices.trim().length === 0) {
+      return [];
+    }
+    choices = choices.trim();
+    const parts = choices.split(',').map((v, i) => {
+      if (this.orderType === 'A') {
+        return this.abcd[i] + '.' + v;
+      } else {
+        return (i + 1) + '.' + v;
+      }
+    });
+
+    return parts;
+  }
+
+  onQuestionInput() {
+    this.choices = this.getChoices();
+  }
+
+  onChoiceInput() {
+    this.choices = this.getChoices();
+  }
+
+  onOrderTypeChange() {
+    this.choices = this.getChoices();
   }
 
 }
