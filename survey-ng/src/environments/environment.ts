@@ -4,7 +4,8 @@
 
 export const environment = {
   production: false,
-  graphqlServer: 'http://localhost:3000/graphql'
+  graphqlServer: 'http://localhost:3000/graphql',
+  uploadUrl: ''
 };
 
 /*

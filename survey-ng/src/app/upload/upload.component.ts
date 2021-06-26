@@ -1,6 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { Apollo, gql } from 'apollo-angular';
 import { ConfirmationService, MessageService, PrimeIcons } from 'primeng/api';
+import { environment } from 'src/environments/environment';
 import * as xlsx from "xlsx";
 import { SurveyData } from '../model';
 
@@ -20,7 +22,8 @@ export class UploadComponent implements OnInit {
   constructor(
     private apollo: Apollo,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService
+    private confirmationService: ConfirmationService,
+    private http: HttpClient
   ) { }
 
   ngOnInit(): void {
@@ -129,7 +132,18 @@ export class UploadComponent implements OnInit {
       accept: () => {
         this.isSaving = true;
         const data = this.uploadedData;
-        this.apollo.mutate({
+        this.http.post(environment.uploadUrl, {
+          data
+        })
+          .subscribe(res => {
+            this.isSaving = false;
+            this.uploadedData = [];
+            this.messageService.add({ severity: 'success', summary: 'Upload Saved Successfully.', detail: `Upload successful` });
+          }, err => {
+            this.isSaving = false;
+            this.toggleDialog(`Upload Error`, err.message);
+          });
+        /*this.apollo.mutate({
           mutation: gql`mutation m($data: [SurveySampleInput!]!) {
             uploadData(data: $data) {
                 success
@@ -155,7 +169,7 @@ export class UploadComponent implements OnInit {
           }, err => {
             this.isSaving = false;
             this.toggleDialog(`Upload Error`, err.message);
-          });
+          });*/
       }
     });
   }
